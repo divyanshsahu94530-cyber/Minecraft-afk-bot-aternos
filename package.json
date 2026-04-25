@@ -12,5 +12,8 @@
   "dependencies": {
     "mineflayer": "^4.37.0",
     "express": "^4.19.2"
+  },
+  "engines": {
+    "node": "18.x"
   }
 }
