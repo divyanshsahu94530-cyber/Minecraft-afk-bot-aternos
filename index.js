@@ -1,3 +1,10 @@
+process.on("uncaughtException", (err) => {
+  console.log("CRASH FIXED:", err);
+});
+
+process.on("unhandledRejection", (err) => {
+  console.log("PROMISE ERROR:", err);
+});
 const http = require('http');
 const mineflayer = require('mineflayer');
 const CONFIG = require("./config.json");
@@ -113,12 +120,11 @@ const server = http.createServer((req, res) => {
   res.end("Bot running");
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 
-// Start web first (Railway safe)
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`Web server running on port ${PORT}`);
 
   // Start bot after delay (prevents Railway timeout)
-  setTimeout(createBot, 2000);
+  setTimeout(createBot, 3000);
 });
