@@ -1,17 +1,12 @@
 {
-  "name": "atornes-afkbot",
+  "name": "afk-bot",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
-  "author": "JadeMin",
-  "license": "GPL-3.0",
-  "description": "Aternos AFKBot",
-  "private": true,
   "dependencies": {
-    "mineflayer": "^4.37.0",
-    "express": "^4.19.2"
+    "mineflayer": "^4.37.0"
   },
   "engines": {
     "node": "18.x"
