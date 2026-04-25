@@ -6,6 +6,9 @@
   "logger": true,
 
   "moveForward": true,
+  "autoReconnect": true,
+  
+  "jumpInterval": 3000,
 
   "DO_NOT_EDIT_CONFIGS_DOWN_BELOW": "IF YOU DON'T KNOW WHAT YOU'RE DOING",
 
