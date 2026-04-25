@@ -1,12 +1,18 @@
 {
   "host": "CozyrealmsD.aternos.me",
   "port": 49718,
-  "username": "AFK_Bot",
-  "version": false,
+  "username": "Mr_OrigamiD",
+
+  "logger": true,
+
+  "moveForward": true,
+
+  "DO_NOT_EDIT_CONFIGS_DOWN_BELOW": "IF YOU DON'T KNOW WHAT YOU'RE DOING",
+
+  "actionDelays": [500, 1000, 1500, 2000, 2500, 3000],
+
   "retryTimes": {
-    "ms": 5000,
-    "text": "5 seconds"
-  },
-  "actionDelays": [1000, 2000, 3000],
-  "logger": true
+    "ms": 30000,
+    "text": "30s"
+  }
 }
