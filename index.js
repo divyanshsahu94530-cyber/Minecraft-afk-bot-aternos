@@ -5,6 +5,7 @@ const CONFIG = require("./config.json");
 let connected = false;
 let bot = null;
 
+// -------------------- BOT --------------------
 function createBot() {
   bot = mineflayer.createBot({
     host: CONFIG.host,
@@ -29,8 +30,7 @@ function createBot() {
   });
 }
 
-createBot();
-
+// -------------------- WEB SERVER --------------------
 const server = http.createServer((req, res) => {
   if (req.url === "/ping") {
     res.writeHead(200);
@@ -43,6 +43,10 @@ const server = http.createServer((req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
+// ✅ START SERVER FIRST
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Web server running on port ${PORT}`);
+
+  // ✅ THEN START BOT AFTER DELAY
+  setTimeout(createBot, 2000);
 });
