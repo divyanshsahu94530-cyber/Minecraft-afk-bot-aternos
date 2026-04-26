@@ -2,10 +2,11 @@
   "host": "CozyrealmsD.aternos.me",
   "port": 49718,
   "username": "Mr_OrigamiD",
+  "password": "4878876",
 
   "logger": true,
 
-  "moveForward": true,
+  "moveForward": false,
   "autoReconnect": true,
   
   "jumpInterval": 3000,
