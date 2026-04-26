@@ -5,6 +5,7 @@ process.on("uncaughtException", (err) => {
 process.on("unhandledRejection", (err) => {
   console.log("PROMISE ERROR:", err);
 });
+
 const http = require('http');
 const mineflayer = require('mineflayer');
 const CONFIG = require("./config.json");
@@ -13,7 +14,7 @@ let connected = false;
 let bot = null;
 
 // -------------------- HELPERS --------------------
-const actions = ['forward', 'back', 'left', 'right', 'jump'];
+const actions = ['forward', 'back', 'left', 'right'];
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -26,6 +27,8 @@ const cLog = (msg) => {
 
 // -------------------- BOT --------------------
 function createBot() {
+  if (bot) return;
+
   bot = mineflayer.createBot({
     host: CONFIG.host,
     port: CONFIG.port,
@@ -38,69 +41,92 @@ function createBot() {
     console.log("Bot joined");
 
     // =========================
-    // MOVE FORWARD MODE
+    // AUTO REGISTER + LOGIN
     // =========================
-    if (CONFIG.moveForward) {
-      bot.setControlState('forward', true);
-      console.log("Bot is moving forward");
+    if (CONFIG.password) {
+      setTimeout(() => {
+        bot.chat(`/register ${CONFIG.password} ${CONFIG.password}`);
+        console.log("Tried register");
 
-      setInterval(() => {
-        if (connected) {
-          bot.setControlState('jump', true);
-          setTimeout(() => {
-            bot.setControlState('jump', false);
-          }, 300);
-        }
+        setTimeout(() => {
+          bot.chat(`/login ${CONFIG.password}`);
+          console.log("Tried login");
+        }, 3000);
+
       }, 3000);
+    }
+
+    // =========================
+    // SMART RANDOM JUMP
+    // =========================
+    function randomJump() {
+      if (!connected) return;
+
+      if (Math.random() < 0.3) {
+        bot.setControlState('jump', true);
+        setTimeout(() => {
+          bot.setControlState('jump', false);
+        }, 200);
+      }
+
+      setTimeout(randomJump, 10000 + Math.random() * 20000);
     }
 
     // =========================
     // RANDOM MOVEMENT LOOP
     // =========================
     async function doMoving() {
-      if (connected) {
-        const lastAction = getRandom(actions);
+      while (connected) {
 
-        bot.setControlState(lastAction, true);
+        if (Math.random() < 0.3) {
+          cLog("Idle...");
+          await sleep(20000 + Math.random() * 20000);
+          continue;
+        }
 
-        if (Math.random() < 0.5) {
+        const action = getRandom(actions);
+
+        bot.setControlState(action, true);
+
+        if (Math.random() < 0.3) {
           bot.setControlState('sprint', true);
         }
 
-        cLog(`Action: ${lastAction}`);
+        cLog(`Action: ${action}`);
 
-        await sleep(getRandom(CONFIG.actionDelays));
+        await sleep(2000 + Math.random() * 3000);
 
-        bot.setControlState(lastAction, false);
+        bot.setControlState(action, false);
         bot.setControlState('sprint', false);
-      }
 
-      await sleep(getRandom(CONFIG.actionDelays));
-      doMoving();
+        await sleep(10000 + Math.random() * 20000);
+      }
     }
 
     // =========================
     // LOOK AROUND LOOP
     // =========================
     async function changeViewPos() {
-      if (connected) {
+      while (connected) {
         const yaw = (Math.random() * Math.PI) - (0.5 * Math.PI);
         const pitch = (Math.random() * Math.PI) - (0.5 * Math.PI);
 
         bot.look(yaw, pitch, false);
-      }
 
-      await sleep(getRandom(CONFIG.actionDelays));
-      changeViewPos();
+        await sleep(5000 + Math.random() * 10000);
+      }
     }
 
+    randomJump();
     changeViewPos();
     doMoving();
   });
 
-  bot.on('end', () => {
+  bot.on('end', (reason) => {
     connected = false;
-    console.log("Disconnected, reconnecting...");
+    bot = null;
+    console.log("Disconnected:", reason);
+    console.log("Reconnecting...");
     setTimeout(createBot, CONFIG.retryTimes.ms);
   });
 
@@ -125,6 +151,5 @@ const PORT = process.env.PORT;
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Web server running on port ${PORT}`);
 
-  // Start bot after delay (prevents Railway timeout)
   setTimeout(createBot, 3000);
 });
