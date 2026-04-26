@@ -10,22 +10,9 @@ const http = require('http');
 const mineflayer = require('mineflayer');
 const CONFIG = require("./config.json");
 
-let connected = false;
 let bot = null;
+let connected = false;
 let isCreating = false;
-let hasAuthRun = false;
-
-// -------------------- HELPERS --------------------
-const actions = ['forward', 'back', 'left', 'right'];
-
-const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-const getRandom = (array) =>
-  array[Math.floor(Math.random() * array.length)];
-
-const cLog = (msg) => {
-  if (CONFIG.logger) console.log(msg);
-};
 
 // -------------------- BOT --------------------
 function createBot() {
@@ -40,136 +27,109 @@ function createBot() {
     version: CONFIG.version || false
   });
 
-  bot.once('spawn', () => {
+  bot.once('spawn', async () => {
     connected = true;
     isCreating = false;
-    hasAuthRun = false;
 
-    console.log("Bot joined");
+    console.log("✅ Bot joined");
+
+    // 🔴 WAIT BEFORE ANYTHING (IMPORTANT)
+    await sleep(10000);
 
     // =========================
-    // ONE TIME REGISTER + LOGIN + MVTP
+    // AUTH SYSTEM (SAFE ORDER)
     // =========================
     if (CONFIG.password) {
-      setTimeout(() => {
-        if (hasAuthRun) return;
-
+      try {
         bot.chat(`/register ${CONFIG.password} ${CONFIG.password}`);
-        console.log("Tried register");
+        console.log("Register sent");
+      } catch {}
 
-        setTimeout(() => {
-          bot.chat(`/login ${CONFIG.password}`);
-          console.log("Tried login");
+      await sleep(5000);
 
-          setTimeout(() => {
-            bot.chat(`/mvtp survival`);
-            console.log("Sent /mvtp survival");
+      try {
+        bot.chat(`/login ${CONFIG.password}`);
+        console.log("Login sent");
+      } catch {}
 
-            hasAuthRun = true;
-          }, 3000);
+      await sleep(7000);
 
-        }, 3000);
-
-      }, 3000);
+      try {
+        bot.chat(`/mvtp survival`);
+        console.log("Teleported to survival");
+      } catch {}
     }
 
-    // =========================
-    // RANDOM JUMP
-    // =========================
-    function randomJump() {
-      if (!connected) return;
+    // 🔴 WAIT BEFORE MOVEMENT
+    await sleep(10000);
 
-      if (Math.random() < 0.2) {
-        bot.setControlState('jump', true);
-        setTimeout(() => {
-          bot.setControlState('jump', false);
-        }, 200);
-      }
-
-      setTimeout(randomJump, 15000 + Math.random() * 20000);
-    }
-
-    // =========================
-    // MOVEMENT LOOP
-    // =========================
-    async function doMoving() {
-      while (connected) {
-
-        if (Math.random() < 0.4) {
-          cLog("Idle...");
-          await sleep(20000 + Math.random() * 20000);
-          continue;
-        }
-
-        const action = getRandom(actions);
-
-        bot.setControlState(action, true);
-
-        cLog(`Action: ${action}`);
-
-        await sleep(1500 + Math.random() * 2000);
-
-        bot.setControlState(action, false);
-
-        await sleep(10000 + Math.random() * 20000);
-      }
-    }
-
-    // =========================
-    // LOOK AROUND
-    // =========================
-    async function changeViewPos() {
-      while (connected) {
-        const yaw = (Math.random() * Math.PI) - (0.5 * Math.PI);
-        const pitch = (Math.random() * Math.PI) - (0.5 * Math.PI);
-
-        bot.look(yaw, pitch, false);
-
-        await sleep(8000 + Math.random() * 10000);
-      }
-    }
-
-    randomJump();
-    changeViewPos();
-    doMoving();
+    startMovement();
   });
 
   bot.on('end', (reason) => {
     connected = false;
 
-    console.log("Disconnected:", reason);
+    console.log("❌ Disconnected:", reason);
 
     if (bot) {
       try { bot.quit(); } catch {}
       bot = null;
     }
 
+    // 🔴 LONG WAIT (VERY IMPORTANT)
     setTimeout(() => {
-      console.log("Reconnecting...");
+      console.log("🔄 Reconnecting...");
       createBot();
     }, CONFIG.retryTimes.ms);
   });
 
   bot.on('error', err => {
-    console.log("Error:", err);
+    console.log("Error:", err.message);
   });
 }
 
+// -------------------- MOVEMENT --------------------
+function startMovement() {
+
+  // light movement only
+  setInterval(() => {
+    if (!connected) return;
+
+    if (Math.random() < 0.3) {
+      const actions = ['forward', 'left', 'right'];
+      const action = actions[Math.floor(Math.random() * actions.length)];
+
+      bot.setControlState(action, true);
+
+      setTimeout(() => {
+        bot.setControlState(action, false);
+      }, 1000);
+    }
+  }, 20000);
+
+  // slow look
+  setInterval(() => {
+    if (!connected) return;
+
+    const yaw = bot.entity.yaw + (Math.random() * 0.5 - 0.25);
+    const pitch = bot.entity.pitch + (Math.random() * 0.3 - 0.15);
+
+    bot.look(yaw, pitch, false);
+  }, 15000);
+}
+
+// -------------------- HELPERS --------------------
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
 // -------------------- WEB SERVER --------------------
 const server = http.createServer((req, res) => {
-  if (req.url === "/" || req.url === "/ping") {
-    res.writeHead(200);
-    return res.end("OK");
-  }
-
   res.writeHead(200);
-  res.end("Bot running");
+  res.end("OK");
 });
 
 const PORT = process.env.PORT;
 
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Web server running on port ${PORT}`);
-
-  setTimeout(createBot, 3000);
+  console.log(`🌐 Server running on ${PORT}`);
+  setTimeout(createBot, 5000);
 });
