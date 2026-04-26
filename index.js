@@ -13,6 +13,7 @@ const CONFIG = require("./config.json");
 let connected = false;
 let bot = null;
 let isCreating = false;
+let hasAuthRun = false;
 
 // -------------------- HELPERS --------------------
 const actions = ['forward', 'back', 'left', 'right'];
@@ -42,26 +43,38 @@ function createBot() {
   bot.once('spawn', () => {
     connected = true;
     isCreating = false;
+    hasAuthRun = false;
 
     console.log("Bot joined");
 
     // =========================
-    // AUTO REGISTER + LOGIN
+    // ONE TIME REGISTER + LOGIN + MVTP
     // =========================
     if (CONFIG.password) {
       setTimeout(() => {
+        if (hasAuthRun) return;
+
         bot.chat(`/register ${CONFIG.password} ${CONFIG.password}`);
         console.log("Tried register");
 
         setTimeout(() => {
           bot.chat(`/login ${CONFIG.password}`);
           console.log("Tried login");
+
+          setTimeout(() => {
+            bot.chat(`/mvtp survival`);
+            console.log("Sent /mvtp survival");
+
+            hasAuthRun = true;
+          }, 3000);
+
         }, 3000);
+
       }, 3000);
     }
 
     // =========================
-    // SAFE RANDOM JUMP
+    // RANDOM JUMP
     // =========================
     function randomJump() {
       if (!connected) return;
@@ -77,12 +90,11 @@ function createBot() {
     }
 
     // =========================
-    // RANDOM MOVEMENT LOOP
+    // MOVEMENT LOOP
     // =========================
     async function doMoving() {
       while (connected) {
 
-        // idle sometimes
         if (Math.random() < 0.4) {
           cLog("Idle...");
           await sleep(20000 + Math.random() * 20000);
@@ -104,7 +116,7 @@ function createBot() {
     }
 
     // =========================
-    // LOOK AROUND LOOP
+    // LOOK AROUND
     // =========================
     async function changeViewPos() {
       while (connected) {
