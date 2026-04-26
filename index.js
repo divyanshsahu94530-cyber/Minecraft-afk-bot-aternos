@@ -12,6 +12,7 @@ const CONFIG = require("./config.json");
 
 let connected = false;
 let bot = null;
+let isCreating = false;
 
 // -------------------- HELPERS --------------------
 const actions = ['forward', 'back', 'left', 'right'];
@@ -27,7 +28,9 @@ const cLog = (msg) => {
 
 // -------------------- BOT --------------------
 function createBot() {
-  if (bot) return;
+  if (bot || isCreating) return;
+
+  isCreating = true;
 
   bot = mineflayer.createBot({
     host: CONFIG.host,
@@ -36,8 +39,10 @@ function createBot() {
     version: CONFIG.version || false
   });
 
-  bot.on('spawn', () => {
+  bot.once('spawn', () => {
     connected = true;
+    isCreating = false;
+
     console.log("Bot joined");
 
     // =========================
@@ -52,24 +57,23 @@ function createBot() {
           bot.chat(`/login ${CONFIG.password}`);
           console.log("Tried login");
         }, 3000);
-
       }, 3000);
     }
 
     // =========================
-    // SMART RANDOM JUMP
+    // SAFE RANDOM JUMP
     // =========================
     function randomJump() {
       if (!connected) return;
 
-      if (Math.random() < 0.3) {
+      if (Math.random() < 0.2) {
         bot.setControlState('jump', true);
         setTimeout(() => {
           bot.setControlState('jump', false);
         }, 200);
       }
 
-      setTimeout(randomJump, 10000 + Math.random() * 20000);
+      setTimeout(randomJump, 15000 + Math.random() * 20000);
     }
 
     // =========================
@@ -78,7 +82,8 @@ function createBot() {
     async function doMoving() {
       while (connected) {
 
-        if (Math.random() < 0.3) {
+        // idle sometimes
+        if (Math.random() < 0.4) {
           cLog("Idle...");
           await sleep(20000 + Math.random() * 20000);
           continue;
@@ -88,16 +93,11 @@ function createBot() {
 
         bot.setControlState(action, true);
 
-        if (Math.random() < 0.3) {
-          bot.setControlState('sprint', true);
-        }
-
         cLog(`Action: ${action}`);
 
-        await sleep(2000 + Math.random() * 3000);
+        await sleep(1500 + Math.random() * 2000);
 
         bot.setControlState(action, false);
-        bot.setControlState('sprint', false);
 
         await sleep(10000 + Math.random() * 20000);
       }
@@ -113,7 +113,7 @@ function createBot() {
 
         bot.look(yaw, pitch, false);
 
-        await sleep(5000 + Math.random() * 10000);
+        await sleep(8000 + Math.random() * 10000);
       }
     }
 
@@ -124,10 +124,18 @@ function createBot() {
 
   bot.on('end', (reason) => {
     connected = false;
-    bot = null;
+
     console.log("Disconnected:", reason);
-    console.log("Reconnecting...");
-    setTimeout(createBot, CONFIG.retryTimes.ms);
+
+    if (bot) {
+      try { bot.quit(); } catch {}
+      bot = null;
+    }
+
+    setTimeout(() => {
+      console.log("Reconnecting...");
+      createBot();
+    }, CONFIG.retryTimes.ms);
   });
 
   bot.on('error', err => {
