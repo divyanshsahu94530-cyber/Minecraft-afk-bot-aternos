@@ -6,17 +6,7 @@
 
   "logger": true,
 
-  "moveForward": false,
-  "autoReconnect": true,
-  
-  "jumpInterval": 3000,
-
-  "DO_NOT_EDIT_CONFIGS_DOWN_BELOW": "IF YOU DON'T KNOW WHAT YOU'RE DOING",
-
-  "actionDelays": [500, 1000, 1500, 2000, 2500, 3000],
-
   "retryTimes": {
-    "ms": 30000,
-    "text": "30s"
+    "ms": 90000
   }
 }
