@@ -46,12 +46,8 @@ function createBot() {
 
     console.log("✅ Bot joined");
 
-    // 🔴 wait for server stability
     await sleep(12000);
 
-    // =========================
-    // LOGIN ONLY (NO REGISTER SPAM)
-    // =========================
     if (CONFIG.password) {
       try {
         bot.chat(`/login ${CONFIG.password}`);
@@ -66,9 +62,6 @@ function createBot() {
       } catch {}
     }
 
-    // =========================
-    // LIGHT MOVEMENT (SAFE)
-    // =========================
     startMovement();
   });
 
@@ -82,7 +75,14 @@ function createBot() {
       bot = null;
     }
 
+    // ✅ NORMAL reconnect
     setTimeout(createBot, CONFIG.retryTimes.ms);
+
+    // ✅ EXTRA SAFETY (Railway restart if stuck)
+    setTimeout(() => {
+      console.log("♻️ Forcing Railway restart...");
+      process.exit(1);
+    }, 60000); // 60 sec fallback
   });
 
   bot.on("error", (err) => {
@@ -92,7 +92,6 @@ function createBot() {
 
 // -------------------- MOVEMENT --------------------
 function startMovement() {
-  // small movement every 20s
   setInterval(() => {
     if (!connected) return;
 
@@ -108,7 +107,6 @@ function startMovement() {
     }
   }, 20000);
 
-  // look around slowly
   setInterval(() => {
     if (!connected) return;
 
